@@ -15,7 +15,7 @@ class WasteCityModel(mesa.Model):
         n_locals=20,
         n_tourists=10,
         n_cleaners=2,
-        n_bins=8,
+        n_bins=10,
         n_transporters=1,
         cleaner_strategy='nearest',
         transporter_threshold=0.8,
@@ -130,22 +130,23 @@ class WasteCityModel(mesa.Model):
 
     def place_bins(self, n_bins):
         """
-        Bin placement strategy:
-          - 2 bins per district (NW, NE, SW, SE) — ensures even city-wide coverage
-          - Any remaining bins go to the central/attraction zone — highest tourist density
-          - Fallback to random walkable cells if a zone/centre runs out of space
+        Bin placement strategy (3-step priority):
+          1. 2 bins per district (NW, NE, SW, SE) — ensures even city-wide coverage (8 bins)
+          2. Any remaining bins go to the central/attraction zone — highest tourist density
+          3. Fallback to random walkable cells if a zone/centre runs out of space
+
+        Default n_bins=10: 8 district bins + 2 central bins.
         """
         used = {self.disposal_point}
         placed = 0
 
-        # Step 1: 2 bins per district
-        per_district = 2
+        # Step 1: 2 bins per district (outside central zone)
         for zone in ['NW', 'NE', 'SW', 'SE']:
             candidates = [
                 p for p in self.walkable
                 if self.zone_of(p) == zone and p not in used and not self.is_central(p)
             ]
-            chosen = random.sample(candidates, min(per_district, len(candidates)))
+            chosen = random.sample(candidates, min(2, len(candidates)))
             for pos in chosen:
                 self._make_bin(pos)
                 used.add(pos)

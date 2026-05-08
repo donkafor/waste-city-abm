@@ -35,18 +35,21 @@ def plot_metric(results, metric):
 
 
 def main():
+    # Baseline: n_bins=10 (8 district bins + 2 central bins)
+    # few_bins=6  (district only, no central coverage)
+    # many_bins=16 (district + dense central coverage)
     scenarios = {
-        'few_bins': dict(n_bins=4),
-        'many_bins': dict(n_bins=14),
-        'low_tourists': dict(n_tourists=5),
-        'high_tourists': dict(n_tourists=20),
-        'random_cleaning': dict(cleaner_strategy='random'),
-        'nearest_cleaning': dict(cleaner_strategy='nearest'),
-        'fixed_cleaning': dict(cleaner_strategy='fixed'),
-        'rare_transporter': dict(transporter_threshold=1.0),
+        'few_bins':            dict(n_bins=6),
+        'baseline_bins':       dict(n_bins=10),
+        'many_bins':           dict(n_bins=16),
+        'low_tourists':        dict(n_tourists=5),
+        'high_tourists':       dict(n_tourists=20),
+        'random_cleaning':     dict(cleaner_strategy='random'),
+        'nearest_cleaning':    dict(cleaner_strategy='nearest'),
+        'fixed_cleaning':      dict(cleaner_strategy='fixed'),
+        'rare_transporter':    dict(transporter_threshold=1.0),
         'frequent_transporter': dict(transporter_threshold=0.5),
-        'baseline_bins': dict(smart_bins_enabled=False, transporter_threshold=0.8),
-        'smart_bins': dict(smart_bins_enabled=True, transporter_threshold=0.8),
+        'smart_bins':          dict(smart_bins_enabled=True, transporter_threshold=0.8),
     }
 
     all_results = pd.concat(
