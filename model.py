@@ -123,16 +123,55 @@ class WasteCityModel(mesa.Model):
         ]
         return min(candidates, key=lambda b: abs(b.pos[0] - x) + abs(b.pos[1] - y), default=None)
 
+    def _make_bin(self, pos):
+        b = DustBin(self, capacity=15, sensor_threshold=0.8, smart_enabled=self.smart_bins_enabled)
+        self.grid.place_agent(b, pos)
+        self.bins.append(b)
+
     def place_bins(self, n_bins):
-        used = set()
-        while len(self.bins) < n_bins:
+        """
+        Bin placement strategy:
+          - 2 bins per district (NW, NE, SW, SE) — ensures even city-wide coverage
+          - Any remaining bins go to the central/attraction zone — highest tourist density
+          - Fallback to random walkable cells if a zone/centre runs out of space
+        """
+        used = {self.disposal_point}
+        placed = 0
+
+        # Step 1: 2 bins per district
+        per_district = 2
+        for zone in ['NW', 'NE', 'SW', 'SE']:
+            candidates = [
+                p for p in self.walkable
+                if self.zone_of(p) == zone and p not in used and not self.is_central(p)
+            ]
+            chosen = random.sample(candidates, min(per_district, len(candidates)))
+            for pos in chosen:
+                self._make_bin(pos)
+                used.add(pos)
+                placed += 1
+
+        # Step 2: remaining bins go to central/attraction zone
+        remaining = n_bins - placed
+        if remaining > 0:
+            central_candidates = [
+                p for p in self.walkable
+                if self.is_central(p) and p not in used
+            ]
+            chosen = random.sample(central_candidates, min(remaining, len(central_candidates)))
+            for pos in chosen:
+                self._make_bin(pos)
+                used.add(pos)
+                placed += 1
+
+        # Step 3: fallback — fill any shortfall with random walkable cells
+        while placed < n_bins:
             pos = self.random_walkable_cell()
-            if pos == self.disposal_point or pos in used:
+            if pos in used:
                 continue
+            self._make_bin(pos)
             used.add(pos)
-            b = DustBin(self, capacity=15, sensor_threshold=0.8, smart_enabled=self.smart_bins_enabled)
-            self.grid.place_agent(b, pos)
-            self.bins.append(b)
+            placed += 1
 
     def place_people(self, n_locals, n_tourists):
         zones = [('NW', 'SE'), ('NE', 'SW'), ('SW', 'NE'), ('SE', 'NW')]
