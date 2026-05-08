@@ -22,7 +22,7 @@ class WasteCityModel(mesa.Model):
         smart_bins_enabled=False,
         seed=None,
     ):
-        super().__init__(seed=seed)
+        super().__init__(rng=seed)
         self.width = width
         self.height = height
         self.grid = MultiGrid(width, height, torus=False)
